@@ -30,18 +30,20 @@ Two kinds of output, both proven in-game:
 
 ### Prop (don't enter)
 ```
-objbuild  model.obj  X-00.dig X-000.dil  --box        # full-detail render + cheap box collision
-objtex    model.obj  --outdir tex                     # textures from the material colors/maps
-obj2vol   model.obj  --name X --dig X-00.dig --dil X-000.dil --texdir tex -o X.vol
+node objbuild.js  model.obj  X-00.dig X-000.dil  --box     # full-detail render + cheap box collision
+python objtex.py  model.obj  --outdir tex                  # textures from the material colors/maps
+python obj2vol.py model.obj  --name X --dig X-00.dig --dil X-000.dil --texdir tex -o X.vol
 ```
 
 ### Walk-in building (enter it)
 ```
-objvoxel  model.obj  vox.obj  --res 112 --carve "x0,y0,z0,x1,y1,z1"   # blocky interior + a doorway
-objbuild  vox.obj    X-00.dig X-000.dil  --probe=0,0,40 --probe=...   # NORMAL build; verify solid
-objtex / remap textures, then:
-obj2vol   vox.obj    --name X --dig X-00.dig --dil X-000.dil --texdir tex -o X.vol
+python objvoxel.py model.obj vox.obj --res 112 --carve "x0,y0,z0,x1,y1,z1"  # blocky interior + doorway
+node   objbuild.js vox.obj   X-00.dig X-000.dil --probe=0,0,40 --probe=...   # NORMAL build; verify solid
+python objtex.py / remap textures, then:
+python obj2vol.py  vox.obj   --name X --dig X-00.dig --dil X-000.dil --texdir tex -o X.vol
 ```
+
+Only requirements: **Python 3** and **Node.js** (for the prebuilt `objbuild.js`). No emscripten, no engine build.
 
 ---
 
@@ -55,11 +57,12 @@ obj2vol   vox.obj    --name X --dig X-00.dig --dil X-000.dil --texdir tex -o X.v
 | `objtex.py`     | Generate a Tribes PBMP per material — `map_Kd` image → palette-quantized, or a solid swatch from `Kd`. |
 | `textures.py`   | PBMP / Windows-DIB + `.ppl` (PL98 multipalette) read/write. |
 | `volread.py`    | PVOL (`.vol`) reader (used to pull palettes / real textures). |
-| `objbuild.cpp`  | **The real BSP step** — a harness that drives the engine's own `ITRBSPBuild::buildTree` + `ITRPortal::buildPVS` + `ITRBasicLighting::light` and a ported `ITR3DMImport::importFromArrays`. Adds `--box`, `--nocollide`, `--carve`, `--collider`, `--probe`. **Requires the Darkstar engine sources to build — not included here** (see below). |
-| `build-objbuild.ps1` | Reference build script for `objbuild` against the engine tree (emscripten → `objbuild.js`, node-runnable). |
+| `objbuild.js` + `objbuild.wasm` | **The real BSP step — prebuilt, run with Node** (any OS, no engine build needed). The 1998 engine compiled to WebAssembly; drives `ITRBSPBuild::buildTree` + `ITRPortal::buildPVS` + `ITRBasicLighting::light` and a ported `ITR3DMImport::importFromArrays`. Flags: `--box`, `--nocollide`, `--carve`, `--collider`, `--probe`. |
+| `objbuild.cpp` | Source for the above harness (the C++ that calls the engine APIs + the `--box`/`--carve`/`--probe` logic). |
+| `build-objbuild.ps1` | Script to **rebuild** `objbuild.js` from source against the engine tree (emscripten). Only needed if you modify the harness; the prebuilt is ready to run. |
 
-### The engine dependency
-The detailed BSP/PVS/lighting comes from the actual 1998 engine, via `objbuild`. That engine source is **not** in this repo (legality is gray; Tribes itself is freeware since 2015). You need the Darkstar/Tribes engine tree to compile `objbuild`. **Without it, `obj2vol.py` still works but writes an *empty-BSP* fallback** — fine for round-tripping geometry back through the extractor, but the live engine won't render/cull a complex interior from it. The Python tools (voxelize, simplify, texture, pack) are fully standalone.
+### Real BSP works out of the box
+The detailed BSP/PVS/lighting comes from the actual 1998 engine, compiled to WebAssembly as **`objbuild.js` + `objbuild.wasm` (included, ~1.6 MB, node-runnable on any OS)** — just `node objbuild.js …`. (Without running it, `obj2vol.py` falls back to an *empty BSP*: fine for round-tripping geometry, but the live engine won't render/cull a complex interior — so use the included `objbuild.js` for anything real.) To rebuild it from source, you need the Darkstar/Tribes engine tree and `build-objbuild.ps1`.
 
 ---
 
@@ -79,4 +82,4 @@ These are the non-obvious rules that make the difference between "loads and rend
 
 ## Notes
 
-Pure Python 3, standard library only (no Pillow). Starsiege Tribes has been freeware since 2015; this is original tooling for content creation / preservation and contains no game engine source. Provided as-is.
+The Python tools are stdlib-only (no Pillow). `objbuild.js`/`.wasm` is the Darkstar engine compiled to WebAssembly (the engine source builds it via `build-objbuild.ps1`). Starsiege Tribes has been freeware since 2015. Open source, provided as-is.
