@@ -19,7 +19,7 @@ Two kinds of output, both proven in-game:
             └─ (objvoxel.py)     voxelize → blocky WALK-IN interior ─┘  (buildings only)
                     │
                     ▼
-              objbuild(.cpp/.js)  ── engine BSP + PVS + lighting ──►  X-00.dig / X-000.dil
+              node objbuild.js    ── engine BSP + PVS + lighting ──►  X-00.dig / X-000.dil
                     │                 (--box / --nocollide / --carve / --probe)
                     ▼
               objtex.py           ── per-material textures (.bmp)  ──►  tex/*.bmp
@@ -58,11 +58,10 @@ Only requirements: **Python 3** and **Node.js** (for the prebuilt `objbuild.js`)
 | `textures.py`   | PBMP / Windows-DIB + `.ppl` (PL98 multipalette) read/write. |
 | `volread.py`    | PVOL (`.vol`) reader (used to pull palettes / real textures). |
 | `objbuild.js` + `objbuild.wasm` | **The real BSP step — prebuilt, run with Node** (any OS, no engine build needed). The 1998 engine compiled to WebAssembly; drives `ITRBSPBuild::buildTree` + `ITRPortal::buildPVS` + `ITRBasicLighting::light` and a ported `ITR3DMImport::importFromArrays`. Flags: `--box`, `--nocollide`, `--carve`, `--collider`, `--probe`. |
-| `objbuild.cpp` | Source for the above harness (the C++ that calls the engine APIs + the `--box`/`--carve`/`--probe` logic). |
-| `build-objbuild.ps1` | Script to **rebuild** `objbuild.js` from source against the engine tree (emscripten). Only needed if you modify the harness; the prebuilt is ready to run. |
+| `objbuild.cpp`, `build-objbuild.ps1` | *(optional, reference only)* the C++ source of the harness and the script that compiled it. **You don't need these** — `objbuild.js` is already built. They're here only if you ever want to see or modify how it was made. |
 
 ### Real BSP works out of the box
-The detailed BSP/PVS/lighting comes from the actual 1998 engine, compiled to WebAssembly as **`objbuild.js` + `objbuild.wasm` (included, ~1.6 MB, node-runnable on any OS)** — just `node objbuild.js …`. (Without running it, `obj2vol.py` falls back to an *empty BSP*: fine for round-tripping geometry, but the live engine won't render/cull a complex interior — so use the included `objbuild.js` for anything real.) To rebuild it from source, you need the Darkstar/Tribes engine tree and `build-objbuild.ps1`.
+The detailed BSP/PVS/lighting comes from the actual 1998 engine, **already compiled for you** into `objbuild.js` + `objbuild.wasm` (included, ~1.6 MB). Just `node objbuild.js …` — **that's all you need. No engine source, no C++, no emscripten.** (`obj2vol.py` on its own writes an *empty BSP* — fine for round-tripping geometry, but use the included `objbuild.js` for anything you want the game to actually render and collide.)
 
 ---
 
@@ -82,4 +81,4 @@ These are the non-obvious rules that make the difference between "loads and rend
 
 ## Notes
 
-The Python tools are stdlib-only (no Pillow). `objbuild.js`/`.wasm` is the Darkstar engine compiled to WebAssembly (the engine source builds it via `build-objbuild.ps1`). Starsiege Tribes has been freeware since 2015. Open source, provided as-is.
+The Python tools are stdlib-only (no Pillow). `objbuild.js`/`.wasm` is the Darkstar engine prebuilt to WebAssembly — it runs as-is with Node; no engine source or build toolchain required. Starsiege Tribes has been freeware since 2015. Open source, provided as-is.
