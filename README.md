@@ -54,7 +54,7 @@ Only requirements: **Python 3** and **Node.js** (for the prebuilt `objbuild.js`)
 | `obj2vol.py`    | Pack `.dis`+`.dig`+`.dml`(+textures) into a `.vol`. WORD-aligned directory (engine-correct). `--texdir` packs `<Material>.bmp` textures. |
 | `objvoxel.py`   | Voxelize an OBJ into a **blocky walk-in interior**: surface-voxelize → flood-fill solidify (fix hollow walls) → boundary-surface extraction (cull internal faces) → `--carve` doorways. |
 | `objsimplify.py`| Vertex-cluster decimation + weld + degenerate-face drop (shrink a dense mesh, preserving materials/UVs). |
-| `objtex.py`     | Generate a Tribes PBMP per material — `map_Kd` image → palette-quantized, or a solid swatch from `Kd`. |
+| `objtex.py`     | Generate a Tribes PBMP per material (needs a world palette: pass `--ppl <Tribes>/base/lushWorld.vol:lush.day.ppl`, or set `TRIBES_DIR`) — `map_Kd` image → palette-quantized, or a solid swatch from `Kd`. |
 | `textures.py`   | PBMP / Windows-DIB + `.ppl` (PL98 multipalette) read/write. |
 | `volread.py`    | PVOL (`.vol`) reader (used to pull palettes / real textures). |
 | `objbuild.js` + `objbuild.wasm` | **The real BSP step — prebuilt, run with Node** (any OS, no engine build needed). The 1998 engine compiled to WebAssembly; drives `ITRBSPBuild::buildTree` + `ITRPortal::buildPVS` + `ITRBasicLighting::light` and a ported `ITR3DMImport::importFromArrays`. Flags: `--box`, `--nocollide`, `--carve`, `--collider`, `--probe`. |

@@ -35,16 +35,27 @@ import textures
 # palette source (interior multipalette from a world .ppl)
 # --------------------------------------------------------------------------
 
-# default: the structures palette wood4.bmp uses; identical in every world .ppl
-DEFAULT_PPL = (r"C:\Dynamix\Tribes\base\lushWorld.vol", "lush.day.ppl")
+def _default_ppl():
+    """No hardcoded path. If TRIBES_DIR is set, use its lush world palette (any
+    world .ppl works — interior textures share paletteIndex 503). Else None."""
+    td = os.environ.get("TRIBES_DIR")
+    if td:
+        return (os.path.join(td, "base", "lushWorld.vol"), "lush.day.ppl")
+    return None
 
 
 def load_palette(ppl_spec, index):
-    """ppl_spec: 'vol.vol:name.ppl' or None -> default. Returns [(r,g,b)]*256."""
+    """ppl_spec: 'vol.vol:name.ppl' or None. Returns [(r,g,b)]*256."""
     if ppl_spec:
         vp, _, nm = ppl_spec.partition(":")
     else:
-        vp, nm = DEFAULT_PPL
+        d = _default_ppl()
+        if d is None:
+            raise SystemExit(
+                "objtex: no palette source. Pass --ppl "
+                "\"<Tribes>/base/lushWorld.vol:lush.day.ppl\" (any world .ppl works), "
+                "or set the TRIBES_DIR environment variable to your Tribes folder.")
+        vp, nm = d
     tabs = textures.parse_ppl(volread.Vol(vp).read(nm))
     if index not in tabs:
         raise SystemExit("paletteIndex %s not in %s (have %s)" %
@@ -292,7 +303,8 @@ def main():
     ap.add_argument("obj")
     ap.add_argument("--outdir", required=True, help="directory to write <Material>.bmp into")
     ap.add_argument("--palette-index", type=int, default=503, help="interior paletteIndex (default 503)")
-    ap.add_argument("--ppl", default=None, help="palette source 'world.vol:name.ppl' (default lush.day.ppl)")
+    ap.add_argument("--ppl", default=None, help="palette source 'world.vol:name.ppl' "
+                    "(else uses $TRIBES_DIR/base/lushWorld.vol; required if neither is set)")
     ap.add_argument("--size", type=int, default=128, help="max texture dimension (pow2-capped, default 128)")
     ap.add_argument("--solid-size", type=int, default=16, help="dimension for color-only swatches (default 16)")
     args = ap.parse_args()
